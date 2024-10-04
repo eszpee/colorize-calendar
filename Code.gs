@@ -6,9 +6,14 @@
 
 
 // Global debug setting
-// true: print info for every event and don't skip already colored ones
-// false: print info for only newly colorized event and skip already colored events in checking
+// true: print info for every event
+// false: print info for only newly colorized event
 const DEBUG = true
+
+// Global skip check setting
+// true: skip already colored or declined events for better performance
+// false: check all events, regardless of their current color or status
+const SKIPCHECK = false
 
 
 /* Entry for the whole colorizing magic.
@@ -38,8 +43,8 @@ function colorizeCalendar() {
 
   // Walk through all events, check and colorize
   for (var i=0; i<calendarEvents.length; i++) {
-    // Skip for better performance, else go to colorizing below (only if not DEBUGGING)
-    if (!DEBUG && skipCheck(calendarEvents[i])) {
+    // Skip for better performance, else go to colorizing below
+    if (SKIPCHECK && skipCheck(calendarEvents[i])) {
       continue
     }
     colorizeByRegex(calendarEvents[i], myOrg)
