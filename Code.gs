@@ -90,7 +90,7 @@ function colorizeByRegex(event, myOrg) {
     if (event.getColor() === CalendarApp.EventColor.GRAY && !/^\?/.test(eventTitle)) {
         console.log("Removing color from non-tentative event: " + eventTitle)
         event.setColor(null)
-        // return no need to return because this event could need coloring now
+        // return // no need to return because this event could need coloring now
       }
 
     // Check for tentative events
