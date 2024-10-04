@@ -13,7 +13,7 @@ const DEBUG = true
 // Global skip check setting
 // true: skip already colored or declined events for better performance
 // false: check all events, regardless of their current color or status
-const SKIPCHECK = false
+const SKIPCHECK = true
 
 // Color to be assigned to events that are not tentative anymore
 const DEFAULT_EVENT_COLOR = CalendarApp.EventColor.CYAN;
