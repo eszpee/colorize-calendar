@@ -1,0 +1,15 @@
+{
+    "timeZone": "Europe/Budapest",
+    "dependencies": {
+    },
+    "exceptionLogging": "STACKDRIVER",
+    "runtimeVersion": "V8",
+    "oauthScopes": [
+      "https://www.googleapis.com/auth/calendar.addons.execute",
+      "https://www.googleapis.com/auth/calendar.addons.current.event.read",
+      "https://www.googleapis.com/auth/calendar.addons.current.event.write",
+      "https://www.googleapis.com/auth/calendar.readonly",
+      "https://www.google.com/calendar/feeds",
+      "https://www.googleapis.com/auth/calendar"
+    ]
+  }
