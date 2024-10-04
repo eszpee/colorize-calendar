@@ -16,7 +16,7 @@ const DEBUG = true
 const SKIPCHECK = false
 
 // Color to be assigned to events that are not tentative anymore
-const DEFAULT_EVENT_COLOR = CalendarApp.EventColor.PALE_BLUE;
+const DEFAULT_EVENT_COLOR = CalendarApp.EventColor.CYAN;
 
 
 /* Entry for the whole colorizing magic.
