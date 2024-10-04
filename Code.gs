@@ -15,6 +15,9 @@ const DEBUG = true
 // false: check all events, regardless of their current color or status
 const SKIPCHECK = false
 
+// Color to be assigned to events that are not tentative anymore
+const DEFAULT_EVENT_COLOR = CalendarApp.EventColor.PALE_BLUE;
+
 
 /* Entry for the whole colorizing magic.
    Select this function when deploying it and assigning a trigger function
@@ -80,18 +83,16 @@ function skipCheck(event) {
    @param String
 */
 function colorizeByRegex(event, myOrg) {
-
-
   // Converting to lower case for easier matching.
   // Keep lower case in mind when defining your regex(s) below!
   eventTitle = event.getTitle().toLowerCase()
  
-    // Check for GRAY events and remove color if not tentative anymore
-    if (event.getColor() === CalendarApp.EventColor.GRAY && !/^\?/.test(eventTitle)) {
-        console.log("Removing color from non-tentative event: " + eventTitle)
-        event.setColor(null)
-        // return // no need to return because this event could need coloring now
-      }
+  // Check for GRAY events and remove color if not tentative anymore
+  if (event.getColor() === CalendarApp.EventColor.GRAY && !/^\?/.test(eventTitle)) {
+    console.log("Removing color from non-tentative event: " + eventTitle)
+    event.setColor(DEFAULT_EVENT_COLOR)
+    // no need to return because this event could need coloring now
+  }
 
     // Check for tentative events
     if (/^\?/.test(eventTitle)) {
