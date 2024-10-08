@@ -23,8 +23,12 @@ const ONE_ON_ONE_COLOR = CalendarApp.EventColor.MAUVE;
 const GROUP_MEETING_COLOR = CalendarApp.EventColor.BLUE;
 const INTERVIEW_COLOR = CalendarApp.EventColor.PALE_RED;
 
-
-
+// Logging function
+function log(message) {
+  if (DEBUG) {
+    console.log(message);
+  }
+}
 
 /* Entry for the whole colorizing magic.
    Select this function when deploying it and assigning a trigger function
@@ -45,11 +49,7 @@ function colorizeCalendar() {
   // For now only from the default calendar
   var calendarEvents = CalendarApp.getDefaultCalendar().getEvents(startDate, endDate)
 
-
-  if (DEBUG) {
-    console.log("Calendar default org: " + myOrg)
-  }
-
+  log("Calendar default org: " + myOrg)
 
   // Walk through all events, check and colorize
   for (var i=0; i<calendarEvents.length; i++) {
@@ -72,7 +72,7 @@ function colorizeCalendar() {
 */
 function skipCheck(event) {
     if ((event.getColor() != "" && event.getColor() != TENTATIVE_EVENT_COLOR) || event.getMyStatus() == CalendarApp.GuestStatus.NO) {
-        console.log("Skipping already colored / declined event:" + event.getTitle())
+        log("Skipping already colored / declined event:" + event.getTitle())
         return true
     }
     return false
@@ -96,7 +96,7 @@ function colorizeByRegex(event, myOrg) {
  
   // Check for GRAY events and remove color if not tentative anymore
   if (event.getColor() === TENTATIVE_EVENT_COLOR && !/^\?/.test(eventTitle)) {
-    console.log("Removing color from non-tentative event: " + eventTitle)
+    log("Removing color from non-tentative event: " + eventTitle)
     event.setColor(DEFAULT_EVENT_COLOR)
     // no need to return because this event could need coloring now
   }
@@ -104,7 +104,7 @@ function colorizeByRegex(event, myOrg) {
     // Check for tentative events
     if (/^\?/.test(eventTitle)) {
       if (event.getColor() === TENTATIVE_EVENT_COLOR) {
-        console.log("Tentative event already colorized: " + eventTitle)
+        log("Tentative event already colorized: " + eventTitle)
       }
       else {
         console.log("Colorizing tentative event found: " + eventTitle)
@@ -178,7 +178,7 @@ function colorizeByRegex(event, myOrg) {
     // Check for interviews
     if (/interview/.test(eventTitle)) {
 
-      console.log("Colorizing interview stuff found: " + eventTitle)
+      console.log("Colorizing interview found: " + eventTitle)
       event.setColor(INTERVIEW_COLOR)
       return
     }
@@ -189,7 +189,7 @@ function colorizeByRegex(event, myOrg) {
     //     /class/.test(eventTitle) ||
     //     /'some thing' release demo/.test(eventTitle)) {
      
-    //   console.log("Colorizing training found: " + eventTitle)
+    //   log("Colorizing training found: " + eventTitle)
     //   event.setColor(CalendarApp.EventColor.ORANGE)
     //   return
     // }
@@ -198,7 +198,7 @@ function colorizeByRegex(event, myOrg) {
     
     // No match found, therefore no colorizing
     else {
-      console.log("No matching rule for: " + eventTitle)
+      log("No matching rule for: " + eventTitle)
     }
 }
 
@@ -225,7 +225,7 @@ function checkForExternal(event, myOrg) {
     guestEmails.push(guest.getEmail())
     guestDomains.push(guest.getEmail().split("@")[1])
     if (DEBUG)
-    console.log("Participant emails are: " + guestEmails)
+    log("Participant emails are: " + guestEmails)
   }
   */
 
@@ -236,7 +236,7 @@ function checkForExternal(event, myOrg) {
     // get domain of guest and match to my domain
     if (guest.getEmail().split("@")[1] != myOrg) {
      
-      console.log("External domain found: " +
+      log("External domain found: " +
         guest.getEmail().split("@")[1] + " in " + event.getTitle())
       return true
     }
