@@ -8,7 +8,7 @@
 // Global debug setting
 // true: print info for every event
 // false: print info for only newly colorized event
-const DEBUG = false
+const DEBUG = true
 
 // Global skip check setting
 // true: skip already colored or declined events for better performance
