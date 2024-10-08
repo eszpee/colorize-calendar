@@ -96,10 +96,15 @@ function colorizeByRegex(event, myOrg) {
 
     // Check for tentative events
     if (/^\?/.test(eventTitle)) {
+      if (event.getColor() === CalendarApp.EventColor.GRAY) {
+        console.log("Tentative event already colorized: " + eventTitle)
+      }
+      else {
         console.log("Colorizing tentative event found: " + eventTitle)
         event.setColor(CalendarApp.EventColor.GRAY)
-        return
       }
+      return
+    }
   
     // Check for events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
     const location = event.getLocation();
