@@ -64,7 +64,7 @@ function colorizeCalendar() {
    @param CalendarEvent
 */
 function skipCheck(event) {
-    if(event.getColor() != "" || event.getMyStatus() == CalendarApp.GuestStatus.NO) {
+    if ((event.getColor() != "" && event.getColor() != CalendarApp.EventColor.GRAY) || event.getMyStatus() == CalendarApp.GuestStatus.NO) {
         console.log("Skipping already colored / declined event:" + event.getTitle())
         return true
     }
