@@ -15,8 +15,15 @@ const DEBUG = true
 // false: check all events, regardless of their current color or status
 const SKIPCHECK = true
 
-// Color to be assigned to events that are not tentative anymore
+// Color constants
 const DEFAULT_EVENT_COLOR = CalendarApp.EventColor.CYAN;
+const TENTATIVE_EVENT_COLOR = CalendarApp.EventColor.GRAY;
+const EXTERNAL_EVENT_COLOR = CalendarApp.EventColor.YELLOW;
+const ONE_ON_ONE_COLOR = CalendarApp.EventColor.MAUVE;
+const GROUP_MEETING_COLOR = CalendarApp.EventColor.BLUE;
+const INTERVIEW_COLOR = CalendarApp.EventColor.PALE_RED;
+
+
 
 
 /* Entry for the whole colorizing magic.
@@ -64,7 +71,7 @@ function colorizeCalendar() {
    @param CalendarEvent
 */
 function skipCheck(event) {
-    if ((event.getColor() != "" && event.getColor() != CalendarApp.EventColor.GRAY) || event.getMyStatus() == CalendarApp.GuestStatus.NO) {
+    if ((event.getColor() != "" && event.getColor() != TENTATIVE_EVENT_COLOR) || event.getMyStatus() == CalendarApp.GuestStatus.NO) {
         console.log("Skipping already colored / declined event:" + event.getTitle())
         return true
     }
@@ -88,7 +95,7 @@ function colorizeByRegex(event, myOrg) {
   eventTitle = event.getTitle().toLowerCase()
  
   // Check for GRAY events and remove color if not tentative anymore
-  if (event.getColor() === CalendarApp.EventColor.GRAY && !/^\?/.test(eventTitle)) {
+  if (event.getColor() === TENTATIVE_EVENT_COLOR && !/^\?/.test(eventTitle)) {
     console.log("Removing color from non-tentative event: " + eventTitle)
     event.setColor(DEFAULT_EVENT_COLOR)
     // no need to return because this event could need coloring now
@@ -96,12 +103,12 @@ function colorizeByRegex(event, myOrg) {
 
     // Check for tentative events
     if (/^\?/.test(eventTitle)) {
-      if (event.getColor() === CalendarApp.EventColor.GRAY) {
+      if (event.getColor() === TENTATIVE_EVENT_COLOR) {
         console.log("Tentative event already colorized: " + eventTitle)
       }
       else {
         console.log("Colorizing tentative event found: " + eventTitle)
-        event.setColor(CalendarApp.EventColor.GRAY)
+        event.setColor(TENTATIVE_EVENT_COLOR)
       }
       return
     }
@@ -110,7 +117,7 @@ function colorizeByRegex(event, myOrg) {
     const location = event.getLocation();
     if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams")) {
         console.log("Colorizing event with valid location: " + eventTitle)
-        event.setColor(CalendarApp.EventColor.PALE_GREEN)
+        event.setColor(EXTERNAL_EVENT_COLOR)
         return
     }
 
@@ -120,10 +127,10 @@ function colorizeByRegex(event, myOrg) {
     if (participantCount > 0) {
         if (participantCount === 1) {
             console.log("Colorizing event with one participant: " + eventTitle)
-            event.setColor(CalendarApp.EventColor.MAUVE)
+            event.setColor(ONE_ON_ONE_COLOR)
         } else {
             console.log("Colorizing event with multiple participants: " + eventTitle)
-            event.setColor(CalendarApp.EventColor.BLUE)
+            event.setColor(GROUP_MEETING_COLOR)
         }
         return
     }
@@ -172,7 +179,7 @@ function colorizeByRegex(event, myOrg) {
     if (/interview/.test(eventTitle)) {
 
       console.log("Colorizing interview stuff found: " + eventTitle)
-      event.setColor(CalendarApp.EventColor.PALE_RED)
+      event.setColor(INTERVIEW_COLOR)
       return
     }
 
