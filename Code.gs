@@ -101,105 +101,43 @@ function colorizeByRegex(event, myOrg) {
     // no need to return because this event could need coloring now
   }
 
-    // Check for tentative events
-    if (/^\?/.test(eventTitle)) {
-      if (event.getColor() === TENTATIVE_EVENT_COLOR) {
-        log("Tentative event already colorized: " + eventTitle)
-      }
-      else {
-        console.log("Colorizing tentative event found: " + eventTitle)
-        event.setColor(TENTATIVE_EVENT_COLOR)
-      }
-      return
-    }
+  // Check for tentative events
+  if (/^\?/.test(eventTitle) && event.getColor() !== TENTATIVE_EVENT_COLOR) {
+    console.log("Colorizing tentative event found: " + eventTitle)
+    event.setColor(TENTATIVE_EVENT_COLOR)
+    return
+  }
+
+  // Check for interviews
+  if (/interview/.test(eventTitle)) {
+    console.log("Colorizing interview found: " + eventTitle)
+    event.setColor(INTERVIEW_COLOR)
+    return
+  }
+
+  // Check for events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
+  const location = event.getLocation();
+  if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams")) {
+    console.log("Colorizing event with valid location: " + eventTitle)
+    event.setColor(EXTERNAL_EVENT_COLOR)
+    return
+  }
+
+  // Check for events with participants
+  const guestList = event.getGuestList();
+  if (guestList.length === 1) {
+    console.log("Colorizing event with one participant: " + eventTitle)
+    event.setColor(ONE_ON_ONE_COLOR)
+    return
+  }
+  if (guestList.length > 1) {
+    console.log("Colorizing event with multiple participants: " + eventTitle)
+    event.setColor(GROUP_MEETING_COLOR)
+    return
+  }
   
-    // Check for events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
-    const location = event.getLocation();
-    if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams")) {
-        console.log("Colorizing event with valid location: " + eventTitle)
-        event.setColor(EXTERNAL_EVENT_COLOR)
-        return
-    }
-
-    // Check for events with participants
-    const guestList = event.getGuestList();
-    const participantCount = guestList.length;
-    if (participantCount > 0) {
-        if (participantCount === 1) {
-            console.log("Colorizing event with one participant: " + eventTitle)
-            event.setColor(ONE_ON_ONE_COLOR)
-        } else {
-            console.log("Colorizing event with multiple participants: " + eventTitle)
-            event.setColor(GROUP_MEETING_COLOR)
-        }
-        return
-    }
-  
-    
-    // // Check for travel related entries
-    // if(/journey from/.test(eventTitle) ||
-    //    /stay at/.test(eventTitle ||
-    //    /flight to/.test(eventTitle))) {
-
-
-    //   console.log("Colorizing travel found: " + eventTitle)
-    //   event.setColor(CalendarApp.EventColor.GREEN)
-    //   return
-    // }
-
-
-    // /* Check external participation.
-    //    NB: If there are no external participants, one could mark this
-    //    with the "INTERNAL" color. But that would also colorize
-    //    e.g. trainings or events as "INTERNAL", which is technically
-    //    correct, but you might want to give those a "special" color.
-    // */
-    // if (checkForExternal(event, myOrg)) {
-     
-    //   console.log("Colorizing external event found: " + eventTitle)
-    //   event.setColor(CalendarApp.EventColor.RED)
-    //   return
-    // }
-
-
-    // // Check for my team name to mark internal meetings
-    // // or myself for 1:1s
-    // if (/my team name/.test(eventTitle) ||
-    //     /shortname/.test(eventTitle) ||
-    //     /mathias/.test(eventTitle)) {
-
-
-    //   console.log("Colorizing internal stuff found: " + eventTitle)
-    //   event.setColor(CalendarApp.EventColor.BLUE)
-    //   return
-    // }
-
-
-    // Check for interviews
-    if (/interview/.test(eventTitle)) {
-
-      console.log("Colorizing interview found: " + eventTitle)
-      event.setColor(INTERVIEW_COLOR)
-      return
-    }
-
-
-    // // Check for training related meetings
-    // if (/training/.test(eventTitle) ||
-    //     /class/.test(eventTitle) ||
-    //     /'some thing' release demo/.test(eventTitle)) {
-     
-    //   log("Colorizing training found: " + eventTitle)
-    //   event.setColor(CalendarApp.EventColor.ORANGE)
-    //   return
-    // }
-
-
-    
-    // No match found, therefore no colorizing
-    else {
-      log("No matching rule for: " + eventTitle)
-    }
+  // No match found, therefore no colorizing
+  log("No matching rule for: " + eventTitle)
 }
 
 
