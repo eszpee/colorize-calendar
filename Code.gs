@@ -23,6 +23,14 @@ const ONE_ON_ONE_COLOR = CalendarApp.EventColor.MAUVE;
 const GROUP_MEETING_COLOR = CalendarApp.EventColor.BLUE;
 const INTERVIEW_COLOR = CalendarApp.EventColor.PALE_RED;
 
+// Home address for transit time calculations - set it up in Apps Script Settings / Script Properties
+const HOME_ADDRESS = PropertiesService.getUserProperties().getProperty('HOME_ADDRESS');
+
+const transports = {
+  '🚗': Maps.DirectionFinder.Mode.DRIVING,
+  '🚎': Maps.DirectionFinder.Mode.TRANSIT
+};
+
 // Logging function
 function log(message) {
   if (DEBUG) {
@@ -121,25 +129,19 @@ function colorizeByRegex(event, myOrg) {
     console.log("Colorizing event with valid location: " + eventTitle)
     event.setColor(EXTERNAL_EVENT_COLOR)
     if (/^🚗|^🚎/.test(eventTitle)) {
-        // let's create an event for travel time
-        const transport = /^🚎/.test(eventTitle) ? "TRANSIT" : /^🚗/.test(eventTitle) ? "DRIVING" : "";
-        if (transport) {
-          const travelTime = calculateTravelTime(event.getLocation(), transport);
-          if (travelTime) {
-            log("Travel time to " + event.getLocation() + ": " + travelTime);
-  
-            const travelEventTitle = transport === "DRIVING" ? "🚗 travel" : "🚎 travel";
-            const travelToStart = new Date(event.getStartTime().getTime() - travelTime * 60000);
-            const travelBackEnd = new Date(event.getEndTime().getTime() + travelTime * 60000);
-            const travelTo = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, travelToStart, event.getStartTime());
-            const travelBack = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, event.getEndTime(), travelBackEnd);
-            event.setTitle(eventTitle.replace(/^🚗|^🚎/, ''))
+      // let's create an event for travel time
+      const transport = eventTitle.charAt(0);
+        const travelTime = calculateTravelTime(event.getLocation(), event.getStartTime(), transport);
+        if (travelTime) {
+          log("Travel time to " + event.getLocation() + ": " + travelTime);
 
-
-
-          }
+          const travelEventTitle = transport + " travel";
+          const travelToStart = new Date(event.getStartTime().getTime() - travelTime * 60000);
+          const travelBackEnd = new Date(event.getEndTime().getTime() + travelTime * 60000);
+          const travelTo = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, travelToStart, event.getStartTime());
+          const travelBack = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, event.getEndTime(), travelBackEnd);
+          event.setTitle(eventTitle.slice(1));
         }
-
     }
 
 
@@ -169,8 +171,16 @@ function colorizeByRegex(event, myOrg) {
   Inputs are destination location and means of transport 
   Output in minutes
 */
-function calculateTravelTime(destination,transport) {
-  return 30
+function calculateTravelTime(destination,time,transport) {
+  const arrive = new Date(time.getTime() * 60 * 60 * 1000);
+  const directions = Maps.newDirectionFinder()
+    .setArrive(arrive)
+    .setOrigin(HOME_ADDRESS)
+    .setDestination(destination)
+    .setMode(transports[transport]) 
+    .getDirections();
+  const route = directions.routes[0];    
+  return route.legs[0].duration.text;
 }
 
 /* Check participants for external domain other than myOrg. Requires adjustment
