@@ -24,12 +24,13 @@ const GROUP_MEETING_COLOR = CalendarApp.EventColor.BLUE;
 const INTERVIEW_COLOR = CalendarApp.EventColor.PALE_RED;
 
 // Home address for transit time calculations - set it up in Apps Script Settings / Script Properties
-const HOME_ADDRESS = PropertiesService.getUserProperties().getProperty('HOME_ADDRESS');
+const HOME_ADDRESS = PropertiesService.getScriptProperties().getProperty('HOME_ADDRESS');
 
 const transports = {
   '🚗': Maps.DirectionFinder.Mode.DRIVING,
   '🚎': Maps.DirectionFinder.Mode.TRANSIT
 };
+const transportPadding = 15; //how many minutes shoul be added to travel times to account for extra (eg: going to the car, etc.)
 
 // Logging function
 function log(message) {
@@ -100,7 +101,7 @@ function skipCheck(event) {
 function colorizeByRegex(event, myOrg) {
   // Converting to lower case for easier matching.
   // Keep lower case in mind when defining your regex(s) below!
-  eventTitle = event.getTitle().toLowerCase()
+  const eventTitle = event.getTitle().toLowerCase()
  
   // Check for GRAY events and remove color if not tentative anymore
   if (event.getColor() === TENTATIVE_EVENT_COLOR && !/^\?/.test(eventTitle)) {
@@ -126,25 +127,26 @@ function colorizeByRegex(event, myOrg) {
   // Check for events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
   const location = event.getLocation();
   if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
-    console.log("Colorizing event with valid location: " + eventTitle)
-    event.setColor(EXTERNAL_EVENT_COLOR)
+    console.log("Event found with valid location: "+ eventTitle);
     if (/^🚗|^🚎/.test(eventTitle)) {
       // let's create an event for travel time
-      const transport = eventTitle.charAt(0);
-        const travelTime = calculateTravelTime(event.getLocation(), event.getStartTime(), transport);
-        if (travelTime) {
-          log("Travel time to " + event.getLocation() + ": " + travelTime);
+      const t = eventTitle.match(/^🚗|^🚎/)[0];
+      console.log("Transport is: " + t);
+      const travelTime = calculateTravelTime(event.getLocation(), event.getStartTime(), t);
+      if (travelTime) {
+        console.log("Travel time to " + event.getLocation() + ": " + travelTime);
 
-          const travelEventTitle = transport + " travel";
-          const travelToStart = new Date(event.getStartTime().getTime() - travelTime * 60000);
-          const travelBackEnd = new Date(event.getEndTime().getTime() + travelTime * 60000);
-          const travelTo = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, travelToStart, event.getStartTime());
-          const travelBack = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, event.getEndTime(), travelBackEnd);
-          event.setTitle(eventTitle.slice(1));
-        }
+        const travelEventTitle = "Travel (" + t + ")";
+        const travelToStart = new Date(event.getStartTime().getTime() - (travelTime + transportPadding) * 60000);
+        const travelBackEnd = new Date(event.getEndTime().getTime() + (travelTime + transportPadding) * 60000);
+        const travelTo = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, travelToStart, event.getStartTime());
+        const travelBack = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, event.getEndTime(), travelBackEnd);
+        event.setTitle(event.getTitle().replace(/^🚗|^🚎/, ''));
+      }
     }
 
-
+    console.log("Colorizing event with valid location: " + eventTitle)
+    event.setColor(EXTERNAL_EVENT_COLOR)
 
     return
   }
@@ -172,15 +174,13 @@ function colorizeByRegex(event, myOrg) {
   Output in minutes
 */
 function calculateTravelTime(destination,time,transport) {
-  const arrive = new Date(time.getTime() * 60 * 60 * 1000);
   const directions = Maps.newDirectionFinder()
-    .setArrive(arrive)
     .setOrigin(HOME_ADDRESS)
     .setDestination(destination)
     .setMode(transports[transport]) 
     .getDirections();
   const route = directions.routes[0];    
-  return route.legs[0].duration.text;
+  return Math.round(route.legs[0].duration.value / 60);
 }
 
 /* Check participants for external domain other than myOrg. Requires adjustment
