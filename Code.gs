@@ -8,7 +8,7 @@
 // Global debug setting
 // true: print info for every event
 // false: print info for only newly colorized event
-const DEBUG = false
+const DEBUG = true
 
 // Global skip check setting
 // true: skip already colored or declined events for better performance
@@ -117,7 +117,7 @@ function colorizeByRegex(event, myOrg) {
 
   // Check for events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
   const location = event.getLocation();
-  if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams")) {
+  if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
     console.log("Colorizing event with valid location: " + eventTitle)
     event.setColor(EXTERNAL_EVENT_COLOR)
     return
