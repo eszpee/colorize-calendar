@@ -120,6 +120,30 @@ function colorizeByRegex(event, myOrg) {
   if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
     console.log("Colorizing event with valid location: " + eventTitle)
     event.setColor(EXTERNAL_EVENT_COLOR)
+    if (/^🚗|^🚎/.test(eventTitle)) {
+        // let's create an event for travel time
+        const transport = /^🚎/.test(eventTitle) ? "TRANSIT" : /^🚗/.test(eventTitle) ? "DRIVING" : "";
+        if (transport) {
+          const travelTime = calculateTravelTime(event.getLocation(), transport);
+          if (travelTime) {
+            log("Travel time to " + event.getLocation() + ": " + travelTime);
+  
+            const travelEventTitle = transport === "DRIVING" ? "🚗 travel" : "🚎 travel";
+            const travelToStart = new Date(event.getStartTime().getTime() - travelTime * 60000);
+            const travelBackEnd = new Date(event.getEndTime().getTime() + travelTime * 60000);
+            const travelTo = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, travelToStart, event.getStartTime());
+            const travelBack = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, event.getEndTime(), travelBackEnd);
+            event.setTitle(eventTitle.replace(/^🚗|^🚎/, ''))
+
+
+
+          }
+        }
+
+    }
+
+
+
     return
   }
 
@@ -140,6 +164,14 @@ function colorizeByRegex(event, myOrg) {
   log("No matching rule for: " + eventTitle)
 }
 
+
+/* Travel time calculator
+  Inputs are destination location and means of transport 
+  Output in minutes
+*/
+function calculateTravelTime(destination,transport) {
+  return 30
+}
 
 /* Check participants for external domain other than myOrg. Requires adjustment
    if you have multiple "internal" domains, like company.com and company.de.
