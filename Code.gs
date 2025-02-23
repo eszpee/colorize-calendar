@@ -190,6 +190,7 @@ function colorizeByRegex(event, myOrg) {
 
         const travelEventTitle = "Travel (" + t + ")";
         const travelToStart = new Date(event.getStartTime().getTime() - (travelTime + transportPadding) * 60000);
+        //TODO: this could be improved to count the time between event and home and not reuse the travelTime calculated TO the event
         const travelBackEnd = new Date(event.getEndTime().getTime() + (travelTime + transportPadding) * 60000);
         const travelTo = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, travelToStart, event.getStartTime());
         const travelBack = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, event.getEndTime(), travelBackEnd);
@@ -226,10 +227,12 @@ function colorizeByRegex(event, myOrg) {
   Output in minutes
 */
 function calculateTravelTime(destination,time,transport) {
+  const arrivalTime = new Date(time);
   const directions = Maps.newDirectionFinder()
     .setOrigin(HOME_ADDRESS)
     .setDestination(destination)
     .setMode(transports[transport]) 
+    .setArrive(arrivalTime)
     .getDirections();
   const route = directions.routes[0];    
   return Math.round(route.legs[0].duration.value / 60);
