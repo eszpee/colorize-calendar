@@ -64,7 +64,7 @@ function colorizeCalendar(e) {
   );
   
   if (e && e.calendarId) {
-    // Calendar event trigger
+    // Calendar event trigger - only need to check most recently modified item
     Logger.log('Triggered by Calendar change');
     Logger.log('Calendar ID:'+ e.calendarId);
     
@@ -73,18 +73,17 @@ function colorizeCalendar(e) {
       const mostRecentlyModified = calendarEvents[0];
       Logger.log('Most recently modified event:'+ JSON.stringify(mostRecentlyModified));
       Logger.log('Modified at:'+ mostRecentlyModified.getLastUpdated());
-
       if (SKIPCHECK && skipCheck(mostRecentlyModified)) {
         ;
       }
       else {
-        colorizeByRegex(mostRecentlyModified, myOrg)
+        colorizeByRegex(mostRecentlyModified, myOrg);
       }
     }
     else { Logger.log("No events found! This is weird."); }
   } 
   else {
-    // Non-calendar trigger or manual execution -> process all events
+    // Non-calendar trigger or manual execution - process all events
     Logger.log('Non-calendar trigger:'+ JSON.stringify(e));
     Logger.log("Calendar Events to process: " + JSON.stringify(calendarEvents).length);
     // Walk through all events, check and colorize
@@ -100,7 +99,7 @@ function colorizeCalendar(e) {
 
 }
 
-
+//TODO, below is sample code
 // function initializeTriggers() {
 //   // First, delete all existing triggers
 //   ScriptApp.getProjectTriggers().forEach(trigger => ScriptApp.deleteTrigger(trigger));
@@ -236,6 +235,7 @@ function calculateTravelTime(destination,time,transport) {
   return Math.round(route.legs[0].duration.value / 60);
 }
 
+//THIS IS NOT USED
 /* Check participants for external domain other than myOrg. Requires adjustment
    if you have multiple "internal" domains, like company.com and company.de.
    The first external participant match exits this function.
