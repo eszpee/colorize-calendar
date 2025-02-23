@@ -45,49 +45,59 @@ function log(message) {
 function colorizeCalendar(e) {
 
   Logger.log('Trigger event object:'+ JSON.stringify(e));
+  // Extracting the domain of your email, e.g. company.com
+  const myOrg     = //CalendarApp.getDefaultCalendar().getName().split("@")[1];
+                    ""; // eszpee change: not using this in personal context.
 
+  const pastDays = 1 // looking 1 day back to catch last minute changes
+  const futureDays = 7 * 4 // looking 4 weeks into the future
+  
+  const now       = new Date()
+  const startDate = new Date(now.setDate(now.getDate() - pastDays))
+  const endDate   = new Date(now.setDate(now.getDate() + futureDays))
+                
+  const rawEvents = CalendarApp.getDefaultCalendar().getEvents(startDate, endDate)
+    
+  // Sort by last updated time, most recent first
+  const calendarEvents = rawEvents.sort((a, b) => 
+    b.getLastUpdated().getTime() - a.getLastUpdated().getTime()
+  );
+  
   if (e && e.calendarId) {
     // Calendar event trigger
     Logger.log('Triggered by Calendar change');
     Logger.log('Calendar ID:'+ e.calendarId);
     
-    const calendar = CalendarApp.getCalendarById(e.calendarId);
-    // ... calendar event handling logic ...
-    
-  } else if (e && e.timezone !== undefined) {  // Using 'timezone' to identify time-based trigger
-    // Time-based trigger
-    Logger.log('Time-based trigger at:');
-    Logger.log(`${e['day-of-month']}/${e.month}/${e.year} ${e.hour}:${e.minute}:${e.second}`);
-    
-    // ... time-based handling logic ...
-    
-  } else {
-    // Unknown trigger type
-    Logger.log('Unknown trigger type:'+ JSON.stringify(e));
-  }
+    // The first event should be the most recently modified
+    if (calendarEvents.length > 0) {
+      const mostRecentlyModified = calendarEvents[0];
+      Logger.log('Most recently modified event:'+ JSON.stringify(mostRecentlyModified));
+      Logger.log('Modified at:'+ mostRecentlyModified.getLastUpdated());
 
-  const pastDays = 1 // looking 1 day back to catch last minute changes
-  const futureDays = 7 * 4 // looking 4 weeks into the future
- 
-  const now       = new Date()
-  const startDate = new Date(now.setDate(now.getDate() - pastDays))
-  const endDate   = new Date(now.setDate(now.getDate() + futureDays))
-  // Extracting the domain of your email, e.g. company.com
-  const myOrg     = //CalendarApp.getDefaultCalendar().getName().split("@")[1];
-                    ""; // eszpee change: not using this in personal context.
- 
-  // Get all calender events within the defined range
-  // For now only from the default calendar
-  var calendarEvents = CalendarApp.getDefaultCalendar().getEvents(startDate, endDate)
-
-  // Walk through all events, check and colorize
-  for (var i=0; i<calendarEvents.length; i++) {
-    // Skip for better performance, else go to colorizing below
-    if (SKIPCHECK && skipCheck(calendarEvents[i])) {
-      continue
+      if (SKIPCHECK && skipCheck(mostRecentlyModified)) {
+        ;
+      }
+      else {
+        colorizeByRegex(mostRecentlyModified, myOrg)
+      }
     }
-    colorizeByRegex(calendarEvents[i], myOrg)
+    else { Logger.log("No events found! This is weird."); }
+  } 
+  else {
+    // Non-calendar trigger or manual execution -> process all events
+    Logger.log('Non-calendar trigger:'+ JSON.stringify(e));
+    Logger.log("Calendar Events to process: " + JSON.stringify(calendarEvents).length);
+    // Walk through all events, check and colorize
+    for (var i=0; i<calendarEvents.length; i++) {
+      // Skip for better performance, else go to colorizing below
+      if (SKIPCHECK && skipCheck(calendarEvents[i])) {
+        continue
+      }
+      colorizeByRegex(calendarEvents[i], myOrg)
+    }
+            
   }
+
 }
 
 
