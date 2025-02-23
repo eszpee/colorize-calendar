@@ -80,8 +80,6 @@ function colorizeCalendar(e) {
   // For now only from the default calendar
   var calendarEvents = CalendarApp.getDefaultCalendar().getEvents(startDate, endDate)
 
-  log("Calendar default org: " + myOrg)
-
   // Walk through all events, check and colorize
   for (var i=0; i<calendarEvents.length; i++) {
     // Skip for better performance, else go to colorizing below
