@@ -42,8 +42,30 @@ function log(message) {
 /* Entry for the whole colorizing magic.
    Select this function when deploying it and assigning a trigger function
 */
-function colorizeCalendar() {
- 
+function colorizeCalendar(e) {
+
+  Logger.log('Trigger event object:'+ JSON.stringify(e));
+
+  if (e && e.calendarId) {
+    // Calendar event trigger
+    Logger.log('Triggered by Calendar change');
+    Logger.log('Calendar ID:'+ e.calendarId);
+    
+    const calendar = CalendarApp.getCalendarById(e.calendarId);
+    // ... calendar event handling logic ...
+    
+  } else if (e && e.timezone !== undefined) {  // Using 'timezone' to identify time-based trigger
+    // Time-based trigger
+    Logger.log('Time-based trigger at:');
+    Logger.log(`${e['day-of-month']}/${e.month}/${e.year} ${e.hour}:${e.minute}:${e.second}`);
+    
+    // ... time-based handling logic ...
+    
+  } else {
+    // Unknown trigger type
+    Logger.log('Unknown trigger type:'+ JSON.stringify(e));
+  }
+
   const pastDays = 1 // looking 1 day back to catch last minute changes
   const futureDays = 7 * 4 // looking 4 weeks into the future
  
@@ -70,6 +92,29 @@ function colorizeCalendar() {
   }
 }
 
+
+// function initializeTriggers() {
+//   // First, delete all existing triggers
+//   ScriptApp.getProjectTriggers().forEach(trigger => ScriptApp.deleteTrigger(trigger));
+  
+//   // Create the calendar event trigger
+//   ScriptApp.newTrigger('onEventModified')
+//     .forUserCalendar(Session.getActiveUser().getEmail())
+//     .onEventUpdated()
+//     .create();
+    
+//   // Create the time-based trigger (running every hour)
+//   ScriptApp.newTrigger('onEventModified')
+//     .timeBased()
+//     .everyHours(1)  // You can modify this interval
+//     .create();
+    
+//   // Log confirmation
+//   Logger.log('Triggers initialized successfully:');
+//   ScriptApp.getProjectTriggers().forEach(trigger => {
+//     Logger.log(` - Trigger type: ${trigger.getEventType()}`);
+//   });
+// }
 
 /* Performance tweak: skip all events, that do no longer have the DEFAULT color,
    or have been declined already.
