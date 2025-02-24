@@ -91,6 +91,123 @@ function colorizeCalendar(e) {
             
   }
 
+
+  /* Performance tweak: skip all events, that do no longer have the DEFAULT color,
+    or have been declined already.
+    This avoids overriding user settings and doesn't burn regex / string ops
+    for allready adjusted event colors.
+
+
+    @param CalendarEvent
+  */
+    function skipCheck(event) {
+      if ((event.getColor() != "" && event.getColor() != TENTATIVE_EVENT_COLOR) || event.getMyStatus() == CalendarApp.GuestStatus.NO) {
+          if (DEBUG) { Logger.log("Skipping already colored / declined event:" + event.getTitle()); }
+          return true
+      }
+      return false
+  }
+
+
+  /* Actual colorizing of events based on Regex matching.
+    Makes only sense for frequent stuff you want to auto colorize.
+    Order matters for performance! Function exits after first matching color set.
+    
+    https://developers.google.com/apps-script/reference/calendar/event-color
+    Mapping of Google Calendar color names to API color names (Kudos to Jason!):
+    https://lukeboyle.com/blog/posts/google-calendar-api-color-id
+    @param CalendarEvent
+    @param String
+  */
+  function colorizeByRegex(event, myOrg) {
+    // Converting to lower case for easier matching.
+    // Keep lower case in mind when defining your regex(s) below!
+    const eventTitle = event.getTitle().toLowerCase()
+  
+    // Check for GRAY events and remove color if not tentative anymore
+    if (event.getColor() === TENTATIVE_EVENT_COLOR && !/^\?/.test(eventTitle)) {
+      Logger.log("Removing color from non-tentative event: " + eventTitle)
+      event.setColor(DEFAULT_EVENT_COLOR)
+      // no need to return because this event could need coloring now
+    }
+
+    // Check for tentative events
+    if (/^\?/.test(eventTitle) && event.getColor() !== TENTATIVE_EVENT_COLOR) {
+      Logger.log("Colorizing tentative event found: " + eventTitle)
+      event.setColor(TENTATIVE_EVENT_COLOR)
+      return
+    }
+
+    // Check for interviews
+    if (/interview/.test(eventTitle)) {
+      Logger.log("Colorizing interview found: " + eventTitle)
+      event.setColor(INTERVIEW_COLOR)
+      return
+    }
+
+    // Check for events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
+    const location = event.getLocation();
+    if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
+      Logger.log("Event found with valid location: "+ eventTitle);
+      if (/^🚗|^🚎/.test(eventTitle)) {
+        // let's create an event for travel time
+        const t = eventTitle.match(/^🚗|^🚎/)[0];
+        Logger.log("Transport is: " + t);
+        const travelTime = calculateTravelTime(event.getLocation(), event.getStartTime(), t);
+        if (travelTime) {
+          Logger.log("Travel time to " + event.getLocation() + ": " + travelTime);
+
+          const travelEventTitle = "Travel (" + t + ")";
+          const travelToStart = new Date(event.getStartTime().getTime() - (travelTime + transportPadding) * 60000);
+          //TODO: this could be improved to count the time between event and home and not reuse the travelTime calculated TO the event
+          const travelBackEnd = new Date(event.getEndTime().getTime() + (travelTime + transportPadding) * 60000);
+          const travelTo = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, travelToStart, event.getStartTime());
+          const travelBack = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, event.getEndTime(), travelBackEnd);
+          event.setTitle(event.getTitle().replace(/^🚗|^🚎/, ''));
+        }
+      }
+
+      Logger.log("Colorizing event with valid location: " + eventTitle)
+      event.setColor(EXTERNAL_EVENT_COLOR)
+
+      return
+    }
+
+    // Check for events with participants
+    const guestList = event.getGuestList();
+    if (guestList.length === 1) {
+      Logger.log("Colorizing event with one participant: " + eventTitle)
+      event.setColor(ONE_ON_ONE_COLOR)
+      return
+    }
+    if (guestList.length > 1) {
+      Logger.log("Colorizing event with multiple participants: " + eventTitle)
+      event.setColor(GROUP_MEETING_COLOR)
+      return
+    }
+
+    // No match found, therefore no colorizing - only print if DEBUG is true
+    if (DEBUG) { Logger.log("No matching rule for: " + eventTitle); }
+  }
+
+
+  /* Travel time calculator
+    Inputs are destination location and means of transport 
+    Output in minutes
+  */
+  function calculateTravelTime(destination,time,transport) {
+    const arrivalTime = new Date(time);
+    const directions = Maps.newDirectionFinder()
+      .setOrigin(HOME_ADDRESS)
+      .setDestination(destination)
+      .setMode(transports[transport]) 
+      .setArrive(arrivalTime)
+      .getDirections();
+    const route = directions.routes[0];    
+    return Math.round(route.legs[0].duration.value / 60);
+  }
+
+
 }
 
 //TODO, below is sample code
@@ -116,118 +233,3 @@ function colorizeCalendar(e) {
 //     Logger.log(` - Trigger type: ${trigger.getEventType()}`);
 //   });
 // }
-
-/* Performance tweak: skip all events, that do no longer have the DEFAULT color,
-   or have been declined already.
-   This avoids overriding user settings and doesn't burn regex / string ops
-   for allready adjusted event colors.
-
-
-   @param CalendarEvent
-*/
-function skipCheck(event) {
-    if ((event.getColor() != "" && event.getColor() != TENTATIVE_EVENT_COLOR) || event.getMyStatus() == CalendarApp.GuestStatus.NO) {
-        if (DEBUG) { Logger.log("Skipping already colored / declined event:" + event.getTitle()); }
-        return true
-    }
-    return false
-}
-
-
-/* Actual colorizing of events based on Regex matching.
-   Makes only sense for frequent stuff you want to auto colorize.
-   Order matters for performance! Function exits after first matching color set.
-   
-   https://developers.google.com/apps-script/reference/calendar/event-color
-   Mapping of Google Calendar color names to API color names (Kudos to Jason!):
-   https://lukeboyle.com/blog/posts/google-calendar-api-color-id
-   @param CalendarEvent
-   @param String
-*/
-function colorizeByRegex(event, myOrg) {
-  // Converting to lower case for easier matching.
-  // Keep lower case in mind when defining your regex(s) below!
-  const eventTitle = event.getTitle().toLowerCase()
- 
-  // Check for GRAY events and remove color if not tentative anymore
-  if (event.getColor() === TENTATIVE_EVENT_COLOR && !/^\?/.test(eventTitle)) {
-    Logger.log("Removing color from non-tentative event: " + eventTitle)
-    event.setColor(DEFAULT_EVENT_COLOR)
-    // no need to return because this event could need coloring now
-  }
-
-  // Check for tentative events
-  if (/^\?/.test(eventTitle) && event.getColor() !== TENTATIVE_EVENT_COLOR) {
-    Logger.log("Colorizing tentative event found: " + eventTitle)
-    event.setColor(TENTATIVE_EVENT_COLOR)
-    return
-  }
-
-  // Check for interviews
-  if (/interview/.test(eventTitle)) {
-    Logger.log("Colorizing interview found: " + eventTitle)
-    event.setColor(INTERVIEW_COLOR)
-    return
-  }
-
-  // Check for events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
-  const location = event.getLocation();
-  if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
-    Logger.log("Event found with valid location: "+ eventTitle);
-    if (/^🚗|^🚎/.test(eventTitle)) {
-      // let's create an event for travel time
-      const t = eventTitle.match(/^🚗|^🚎/)[0];
-      Logger.log("Transport is: " + t);
-      const travelTime = calculateTravelTime(event.getLocation(), event.getStartTime(), t);
-      if (travelTime) {
-        Logger.log("Travel time to " + event.getLocation() + ": " + travelTime);
-
-        const travelEventTitle = "Travel (" + t + ")";
-        const travelToStart = new Date(event.getStartTime().getTime() - (travelTime + transportPadding) * 60000);
-        //TODO: this could be improved to count the time between event and home and not reuse the travelTime calculated TO the event
-        const travelBackEnd = new Date(event.getEndTime().getTime() + (travelTime + transportPadding) * 60000);
-        const travelTo = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, travelToStart, event.getStartTime());
-        const travelBack = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, event.getEndTime(), travelBackEnd);
-        event.setTitle(event.getTitle().replace(/^🚗|^🚎/, ''));
-      }
-    }
-
-    Logger.log("Colorizing event with valid location: " + eventTitle)
-    event.setColor(EXTERNAL_EVENT_COLOR)
-
-    return
-  }
-
-  // Check for events with participants
-  const guestList = event.getGuestList();
-  if (guestList.length === 1) {
-    Logger.log("Colorizing event with one participant: " + eventTitle)
-    event.setColor(ONE_ON_ONE_COLOR)
-    return
-  }
-  if (guestList.length > 1) {
-    Logger.log("Colorizing event with multiple participants: " + eventTitle)
-    event.setColor(GROUP_MEETING_COLOR)
-    return
-  }
-
-  // No match found, therefore no colorizing - only print if DEBUG is true
-  if (DEBUG) { Logger.log("No matching rule for: " + eventTitle); }
-}
-
-
-/* Travel time calculator
-  Inputs are destination location and means of transport 
-  Output in minutes
-*/
-function calculateTravelTime(destination,time,transport) {
-  const arrivalTime = new Date(time);
-  const directions = Maps.newDirectionFinder()
-    .setOrigin(HOME_ADDRESS)
-    .setDestination(destination)
-    .setMode(transports[transport]) 
-    .setArrive(arrivalTime)
-    .getDirections();
-  const route = directions.routes[0];    
-  return Math.round(route.legs[0].duration.value / 60);
-}
