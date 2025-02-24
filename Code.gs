@@ -30,17 +30,11 @@ const transports = {
   '🚗': Maps.DirectionFinder.Mode.DRIVING,
   '🚎': Maps.DirectionFinder.Mode.TRANSIT
 };
-const transportPadding = 15; //how many minutes shoul be added to travel times to account for extra (eg: going to the car, etc.)
+const transportPadding = 15; //how many minutes should be added to travel times to account for extra (eg: going to the car, etc.)
 
-// Logging function
-function log(message) {
-  if (DEBUG) {
-    console.log(message);
-  }
-}
 
-/* Entry for the whole colorizing magic.
-   Select this function when deploying it and assigning a trigger function
+/* 
+   Entry for the whole colorizing magic.
 */
 function colorizeCalendar(e) {
 
@@ -133,7 +127,7 @@ function colorizeCalendar(e) {
 */
 function skipCheck(event) {
     if ((event.getColor() != "" && event.getColor() != TENTATIVE_EVENT_COLOR) || event.getMyStatus() == CalendarApp.GuestStatus.NO) {
-        log("Skipping already colored / declined event:" + event.getTitle())
+        if (DEBUG) { Logger.log("Skipping already colored / declined event:" + event.getTitle()); }
         return true
     }
     return false
@@ -157,21 +151,21 @@ function colorizeByRegex(event, myOrg) {
  
   // Check for GRAY events and remove color if not tentative anymore
   if (event.getColor() === TENTATIVE_EVENT_COLOR && !/^\?/.test(eventTitle)) {
-    log("Removing color from non-tentative event: " + eventTitle)
+    Logger.log("Removing color from non-tentative event: " + eventTitle)
     event.setColor(DEFAULT_EVENT_COLOR)
     // no need to return because this event could need coloring now
   }
 
   // Check for tentative events
   if (/^\?/.test(eventTitle) && event.getColor() !== TENTATIVE_EVENT_COLOR) {
-    console.log("Colorizing tentative event found: " + eventTitle)
+    Logger.log("Colorizing tentative event found: " + eventTitle)
     event.setColor(TENTATIVE_EVENT_COLOR)
     return
   }
 
   // Check for interviews
   if (/interview/.test(eventTitle)) {
-    console.log("Colorizing interview found: " + eventTitle)
+    Logger.log("Colorizing interview found: " + eventTitle)
     event.setColor(INTERVIEW_COLOR)
     return
   }
@@ -179,14 +173,14 @@ function colorizeByRegex(event, myOrg) {
   // Check for events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
   const location = event.getLocation();
   if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
-    console.log("Event found with valid location: "+ eventTitle);
+    Logger.log("Event found with valid location: "+ eventTitle);
     if (/^🚗|^🚎/.test(eventTitle)) {
       // let's create an event for travel time
       const t = eventTitle.match(/^🚗|^🚎/)[0];
-      console.log("Transport is: " + t);
+      Logger.log("Transport is: " + t);
       const travelTime = calculateTravelTime(event.getLocation(), event.getStartTime(), t);
       if (travelTime) {
-        console.log("Travel time to " + event.getLocation() + ": " + travelTime);
+        Logger.log("Travel time to " + event.getLocation() + ": " + travelTime);
 
         const travelEventTitle = "Travel (" + t + ")";
         const travelToStart = new Date(event.getStartTime().getTime() - (travelTime + transportPadding) * 60000);
@@ -198,7 +192,7 @@ function colorizeByRegex(event, myOrg) {
       }
     }
 
-    console.log("Colorizing event with valid location: " + eventTitle)
+    Logger.log("Colorizing event with valid location: " + eventTitle)
     event.setColor(EXTERNAL_EVENT_COLOR)
 
     return
@@ -207,18 +201,18 @@ function colorizeByRegex(event, myOrg) {
   // Check for events with participants
   const guestList = event.getGuestList();
   if (guestList.length === 1) {
-    console.log("Colorizing event with one participant: " + eventTitle)
+    Logger.log("Colorizing event with one participant: " + eventTitle)
     event.setColor(ONE_ON_ONE_COLOR)
     return
   }
   if (guestList.length > 1) {
-    console.log("Colorizing event with multiple participants: " + eventTitle)
+    Logger.log("Colorizing event with multiple participants: " + eventTitle)
     event.setColor(GROUP_MEETING_COLOR)
     return
   }
-  
-  // No match found, therefore no colorizing
-  log("No matching rule for: " + eventTitle)
+
+  // No match found, therefore no colorizing - only print if DEBUG is true
+  if (DEBUG) { Logger.log("No matching rule for: " + eventTitle); }
 }
 
 
