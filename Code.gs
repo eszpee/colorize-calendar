@@ -32,7 +32,6 @@ const transports = {
 };
 const transportPadding = 15; //how many minutes should be added to travel times to account for extra (eg: going to the car, etc.)
 
-
 /* 
    Entry for the whole colorizing magic.
 */
@@ -210,26 +209,26 @@ function colorizeCalendar(e) {
 
 }
 
-//TODO, below is sample code
-// function initializeTriggers() {
-//   // First, delete all existing triggers
-//   ScriptApp.getProjectTriggers().forEach(trigger => ScriptApp.deleteTrigger(trigger));
+//Initialization, recreates all triggers
+function initializeTriggers() {
+  // First, delete all existing triggers
+  ScriptApp.getProjectTriggers().forEach(trigger => ScriptApp.deleteTrigger(trigger));
   
-//   // Create the calendar event trigger
-//   ScriptApp.newTrigger('onEventModified')
-//     .forUserCalendar(Session.getActiveUser().getEmail())
-//     .onEventUpdated()
-//     .create();
+  // Create the calendar event trigger
+  ScriptApp.newTrigger('colorizeCalendar')
+    .forUserCalendar(Session.getActiveUser().getEmail())
+    .onEventUpdated()
+    .create();
     
-//   // Create the time-based trigger (running every hour)
-//   ScriptApp.newTrigger('onEventModified')
-//     .timeBased()
-//     .everyHours(1)  // You can modify this interval
-//     .create();
-    
-//   // Log confirmation
-//   Logger.log('Triggers initialized successfully:');
-//   ScriptApp.getProjectTriggers().forEach(trigger => {
-//     Logger.log(` - Trigger type: ${trigger.getEventType()}`);
-//   });
-// }
+  // Create the time-based trigger (running once a day)
+  ScriptApp.newTrigger('colorizeCalendar')
+     .timeBased()
+     .everyDays(1)
+     .create();
+
+  // Log installed triggers as confirmation
+  Logger.log('Triggers initialized successfully:');
+  ScriptApp.getProjectTriggers().forEach(trigger => {
+    Logger.log(` - Trigger type: ${trigger.getEventType()}`);
+  });
+}
