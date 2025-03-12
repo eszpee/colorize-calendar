@@ -30,6 +30,7 @@ const transports = {
   '🚗': Maps.DirectionFinder.Mode.DRIVING,
   '🚎': Maps.DirectionFinder.Mode.TRANSIT
 };
+const defaultTransport = '🚗'; //transport for events that don't have a mode of transport in their titles
 const transportPadding = 15; //how many minutes should be added to travel times to account for extra (eg: going to the car, etc.)
 
 /* 
@@ -144,10 +145,11 @@ function colorizeCalendar(e) {
       return
     }
 
-    // Check for events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
+    // Check for non-colorized events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
     const location = event.getLocation();
-    if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
-      Logger.log("Event found with valid location: "+ eventTitle);
+    if (location && (event.getColor() !== EXTERNAL_EVENT_COLOR) && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
+      Logger.log("New event found with valid location: "+ eventTitle);
+      
       if (/^🚗|^🚎/.test(eventTitle)) {
         // let's create an event for travel time
         const t = eventTitle.match(/^🚗|^🚎/)[0];
