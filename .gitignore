@@ -1,0 +1,6 @@
+# Google Apps Script local development files
+.clasp.json
+.clasprc.json
+
+# Claude stuff
+CLAUDE.md
