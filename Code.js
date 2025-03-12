@@ -150,29 +150,34 @@ function colorizeCalendar(e) {
     if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
       Logger.log("New event found with valid location: "+ eventTitle);
       
+      // let's create events for travel time
+      let t = defaultTransport;
       if (/^🚗|^🚎/.test(eventTitle)) {
-        // let's create an event for travel time
-        const t = eventTitle.match(/^🚗|^🚎/)[0];
-        Logger.log("Transport is: " + t);
-        const travelTime = calculateTravelTime(event.getLocation(), event.getStartTime(), t);
-        if (travelTime) {
-          Logger.log("Travel time to " + event.getLocation() + ": " + travelTime);
+        t = eventTitle.match(/^🚗|^🚎/)[0];
+      }
+      Logger.log("Transport is: " + t);
+      const travelTime = calculateTravelTime(event.getLocation(), event.getStartTime(), t);
+      if (travelTime) {
+        Logger.log("Travel time to " + event.getLocation() + ": " + travelTime);
 
-          const travelEventTitle = "Travel (" + t + ")";
-          const travelToStart = new Date(event.getStartTime().getTime() - (travelTime + transportPadding) * 60000);
-          //TODO: this could be improved to count the time between event and home and not reuse the travelTime calculated TO the event
-          const travelBackEnd = new Date(event.getEndTime().getTime() + (travelTime + transportPadding) * 60000);
-          const travelTo = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, travelToStart, event.getStartTime());
-          const travelBack = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, event.getEndTime(), travelBackEnd);
-          event.setTitle(event.getTitle().replace(/^🚗|^🚎/, ''));
-        }
+        const travelEventTitle = t + " travel";
+        const travelToStart = new Date(event.getStartTime().getTime() - (travelTime + transportPadding) * 60000);
+        //TODO: this could be improved to count the time between event and home and not reuse the travelTime calculated TO the event
+        const travelBackEnd = new Date(event.getEndTime().getTime() + (travelTime + transportPadding) * 60000);
+        const travelTo = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, travelToStart, event.getStartTime());
+        travelTo.setColor(EXTERNAL_EVENT_COLOR);
+        const travelBack = CalendarApp.getDefaultCalendar().createEvent(travelEventTitle, event.getEndTime(), travelBackEnd);
+        travelBack.setColor(EXTERNAL_EVENT_COLOR);
+        event.setTitle(event.getTitle().replace(/^🚗|^🚎/, ''));
       }
 
+      // let's colorize the external event
       Logger.log("Colorizing event with valid location: " + eventTitle)
       event.setColor(EXTERNAL_EVENT_COLOR)
 
       return
     }
+    
 
     // Check for events with participants
     const guestList = event.getGuestList();
