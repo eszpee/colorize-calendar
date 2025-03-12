@@ -147,7 +147,7 @@ function colorizeCalendar(e) {
 
     // Check for non-colorized events with a valid location (not starting with "Google" or "Microsoft Teams" that are videoconferencing)
     const location = event.getLocation();
-    if (location && (event.getColor() !== EXTERNAL_EVENT_COLOR) && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
+    if (location && !location.startsWith("Google") && !location.startsWith("Microsoft Teams") && !location.includes("http")) {
       Logger.log("New event found with valid location: "+ eventTitle);
       
       if (/^🚗|^🚎/.test(eventTitle)) {
