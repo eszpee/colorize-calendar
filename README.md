@@ -55,11 +55,11 @@ The script uses the following criteria to determine the color of calendar events
 
 For events that require travel, the script performs the following:
 
-1. **Transport Mode**: The script recognizes transport modes indicated by emojis (🚗 for driving and 🚎 for transit) at the beginning of the event title. *Make sure you start the event titles with these characters (the first ones on Apple devices if you start to type `car` or `bus`) if you want travel events to be created!*
-2. **Travel Time Calculation**: It calculates the travel time from the user's home address to the event location using Google Maps.
-3. **Travel Events Creation**: The script creates two travel events:
+1. **Travel Time Calculation**: It calculates the travel time from the user's home address to the event location using Google Maps.
+2. **Travel Events Creation**: The script creates two travel events:
    - One for the time it takes to get to the event (starting from the calculated travel time before the event).
-   - Another for the return trip after the event ends.
+   - Another for the return trip after the event ends. Both travel events are colored yellow.
+3. **Transport Mode**: The script used a default transport mode (car) for events that don't have a specified transport mode. Transport mode can be specified by emojis (🚗 for driving and 🚎 for transit) at the beginning of the event title. This transport emoji is removed from the event title after processing.
 
 ## Usage, Contributions
 
